@@ -29,7 +29,6 @@ class CloudflareManager:
         current_lists_count = 0
         current_lists_count_without_prefix = 0
         if current_lists.get("result"):
-        mm
             current_lists["result"].sort(key=lambda x: int(x["name"].split("-")[-1].strip())) if self.prefix in list_item["name"]
             current_lists_count = len(
                 [list_item for list_item in current_lists["result"] if self.prefix in list_item["name"]]
