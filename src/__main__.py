@@ -18,7 +18,7 @@ class CloudflareManager:
     def run(self):
         converter = domains.DomainConverter()
         domain_list = converter.process_urls()
-        mmm = len(domain_list)
+        total_lines = len(domain_list)
         if total_lines > self.max_list_size * self.max_lists:
             error(f"The domains list has more than {self.max_list_size * self.max_lists} lines")
         total_lists = total_lines // self.max_list_size
