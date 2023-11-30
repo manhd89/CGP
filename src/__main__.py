@@ -20,7 +20,7 @@ class CloudflareManager:
         converter = domains.DomainConverter()
         domain_list = converter.process_urls()
         total_lines = len(domain_list)
-        if total_lines ==0
+        if total_lines == 0:
             silent_error(f"No domain")
         if total_lines > self.max_list_size * self.max_lists:
             error(f"The domains list has more than {self.max_list_size * self.max_lists} lines")
