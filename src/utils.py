@@ -41,7 +41,7 @@ def update_lists(current_lists, chunked_lists):
     excess_list_ids = []
 
     for list_item in current_lists.get("result", []):
-        if PREFIX in list_item["name"]:
+        if f"[{PREFIX}]" in list_item["name"]:
             if not chunked_lists:
                 info(f"Marking list {list_item['name']} for deletion")
                 excess_list_ids.append(list_item["id"])
@@ -72,15 +72,15 @@ def create_lists(chunked_lists, current_lists_count):
 
     for chunk_list in chunked_lists:
         formatted_counter = f"{create_counter:03d}"
-        info(f"Creating list {PREFIX} - {formatted_counter}")
+        info(f"Creating list [{PREFIX}] - {formatted_counter}")
 
         payload = create_list_payload(
-            f"{PREFIX} - {formatted_counter}", chunk_list
+            f"[{PREFIX}] - {formatted_counter}", chunk_list
         )
 
-        list = cloudflare.create_list(payload)
-        if list:
-            used_list_ids.append(list.get("result", {}).get("id"))
+        created_list = cloudflare.create_list(payload)
+        if created_list:
+            used_list_ids.append(created_list.get("result", {}).get("id"))
 
         create_counter += 1
 
@@ -90,35 +90,35 @@ def update_or_create_policy(current_policies, used_list_ids):
     policy_id = None
 
     for policy_item in current_policies.get("result", []):
-        if policy_item["name"] == PREFIX:
+        if policy_item["name"] == f"[{PREFIX}] Block Ads":
             policy_id = policy_item["id"]
 
     json_data = create_policy_json(
-        f"{PREFIX}", used_list_ids
+        f"[{PREFIX}] Block Ads", used_list_ids
     )
 
     if not policy_id or policy_id == "null":
-        info(f"Creating policy {PREFIX}")
+        info(f"Creating policy [{PREFIX}] Block Ads")
         cloudflare.create_policy(json_data)
     else:
-        info(f"Updating policy {PREFIX}")
+        info(f"Updating policy [{PREFIX}] Block Ads")
         cloudflare.update_policy(policy_id, json_data)
 
 def delete_excess_lists(current_lists, excess_list_ids):
     info("Deleting lists...")
-    for list in current_lists.get("result", []):
-        if list["id"] in excess_list_ids:
-            info(f"Deleting list {list['name']}")
-            cloudflare.delete_list(list["id"])
+    for list_item in current_lists.get("result", []):
+        if list_item["id"] in excess_list_ids:
+            info(f"Deleting list {list_item['name']}")
+            cloudflare.delete_list(list_item["id"])
 
 def delete_policy(current_policies):
     policy_id = None
-    for policy_item in current_policies["result"]:
-        if policy_item["name"] == PREFIX:
+    for policy_item in current_policies.get("result", []):
+        if policy_item["name"] == f"[{PREFIX}] Block Ads":
             policy_id = policy_item["id"]
 
     if policy_id:
-        info(f"Deleting policy {PREFIX}")
+        info(f"Deleting policy [{PREFIX}] Block Ads")
         cloudflare.delete_policy(policy_id)
 
 def delete_lists(current_lists):
@@ -127,7 +127,7 @@ def delete_lists(current_lists):
         current_lists["result"].sort(key=lambda x: int(x["name"].split("-")[-1].strip()))
 
         for list_item in current_lists["result"]:
-            if PREFIX in list_item["name"]:
+            if f"[{PREFIX}]" in list_item["name"]:
                 list_ids_to_delete.append(list_item['id'])
 
         for list_id in list_ids_to_delete:
