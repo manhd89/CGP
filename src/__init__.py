@@ -1,5 +1,6 @@
 import re
 import os
+from sys import exit
 from libs.loguru import logger
 from libs.dotenv import load_dotenv
 from libs import requests 
