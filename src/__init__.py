@@ -25,6 +25,7 @@ if not CF_API_TOKEN or not CF_IDENTIFIER:
 PREFIX = "AdBlock-DNS-Filters"
 MAX_LIST_SIZE = 1000
 MAX_LISTS = 300
+MAX_RETRY = 3
 
 session = requests.Session()
 session.headers.update({
