@@ -4,10 +4,9 @@ from src import (
     session,
     silent_error,
     BASE_URL,
+    MAX_RETRY,
     MAX_LIST_SIZE
 )
-
-MAX_RETRY = 3
 
 def get_current_lists():
     for _ in range(MAX_RETRY):
