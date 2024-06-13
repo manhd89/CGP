@@ -64,5 +64,5 @@ class DomainConverter:
             whitelist_content = white_file.read()
             white_content += whitelist_content
         
-        domains = convert.convert_to_domain_list(block_content.decode('utf-8'), white_content.decode('utf-8'))
+        domains = convert.convert_to_domain_list(block_content, white_content)
         return domains
