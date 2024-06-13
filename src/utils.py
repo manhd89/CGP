@@ -1,10 +1,28 @@
+import re
+import time
 from src import (
     info,
     PREFIX, 
     cloudflare,
     silent_error,
-    MAX_LIST_SIZE
+    MAX_LIST_SIZE,
+    RATE_LIMIT_INTERVAL
 )
+
+class RateLimiter:
+    def __init__(self, interval):
+        self.interval = interval
+        self.timestamp = time.time()
+
+    def wait_for_next_request(self):
+        now = time.time()
+        elapsed = now - self.timestamp
+        sleep_time = max(0, self.interval - elapsed)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        self.timestamp = time.time()
+
+rate_limiter = RateLimiter(interval=RATE_LIMIT_INTERVAL)
 
 def split_domain_list(domain_list):
     return [
@@ -35,43 +53,64 @@ def create_policy_json(name, used_list_ids):
         },
         "filters": ["dns"],
     }
-    
+
+def get_missing_indices(existing_indices, total_lists):
+    all_indices = set(range(1, total_lists + 1))
+    missing_indices = list(all_indices - set(existing_indices))
+    missing_indices.sort()
+    return missing_indices
+
+def safe_sort_key(list_item):
+    match = re.search(r'\d+', list_item["name"])
+    return int(match.group()) if match else float('inf')
+
 def update_lists(current_lists, chunked_lists):
     used_list_ids = []
     excess_list_ids = []
 
+    existing_indices = [
+        int(re.search(r'\d+', list_item["name"]).group())
+        for list_item in current_lists.get("result", [])
+        if f"[{PREFIX}]" in list_item["name"]
+    ]
+
+    total_lists = len(chunked_lists)
+    missing_indices = get_missing_indices(existing_indices, total_lists)
+
     for list_item in current_lists.get("result", []):
         if f"[{PREFIX}]" in list_item["name"]:
-            if not chunked_lists:
-                info(f"Marking list {list_item['name']} for deletion")
-                excess_list_ids.append(list_item["id"])
-                continue
+            list_index = int(re.search(r'\d+', list_item["name"]).group())
+            if list_index in existing_indices:
+                if chunked_lists:
+                    info(f"Updating list {list_item['name']}")
 
-            info(f"Updating list {list_item['name']}")
+                    list_items = cloudflare.get_list_items(list_item["id"])
+                    list_items_values = [
+                        item["value"] for item in list_items.get("result", []) if item["value"] is not None
+                    ]
+                    list_items_array = [{"value": domain} for domain in chunked_lists.pop(0)]
 
-            list_items = cloudflare.get_list_items(list_item["id"])
-            list_items_values = [
-                item["value"] for item in list_items.get("result", []) if item["value"] is not None
-            ]
-            list_items_array = [{"value": domain} for domain in chunked_lists[0]]
+                    payload = {
+                        "append": list_items_array,
+                        "remove": list_items_values,
+                    }
 
-            payload = {
-                "append": list_items_array,
-                "remove": list_items_values,
-            }
+                    cloudflare.patch_list(list_item["id"], payload)
+                    used_list_ids.append(list_item["id"])
+                    rate_limiter.wait_for_next_request()
+                    continue 
 
-            cloudflare.patch_list(list_item["id"], payload)
-            used_list_ids.append(list_item["id"])
-            chunked_lists.pop(0)
+            info(f"Marking list {list_item['name']} for deletion")
+            excess_list_ids.append(list_item["id"])
+                
 
-    return used_list_ids, excess_list_ids
+    return used_list_ids, excess_list_ids, missing_indices
 
-def create_lists(chunked_lists, current_lists_count):
-    create_counter = current_lists_count + 1
+def create_lists(chunked_lists, missing_indices):
     used_list_ids = []
 
-    for chunk_list in chunked_lists:
-        formatted_counter = f"{create_counter:03d}"
+    for chunk_list, index in zip(chunked_lists, missing_indices):
+        formatted_counter = f"{index:03d}"
         info(f"Creating list [{PREFIX}] - {formatted_counter}")
 
         payload = create_list_payload(
@@ -82,7 +121,7 @@ def create_lists(chunked_lists, current_lists_count):
         if created_list:
             used_list_ids.append(created_list.get("result", {}).get("id"))
 
-        create_counter += 1
+        rate_limiter.wait_for_next_request()
 
     return used_list_ids
 
@@ -103,6 +142,7 @@ def update_or_create_policy(current_policies, used_list_ids):
     else:
         info(f"Updating policy [{PREFIX}] Block Ads")
         cloudflare.update_policy(policy_id, json_data)
+    rate_limiter.wait_for_next_request()
 
 def delete_excess_lists(current_lists, excess_list_ids):
     info("Deleting lists...")
@@ -110,6 +150,7 @@ def delete_excess_lists(current_lists, excess_list_ids):
         if list_item["id"] in excess_list_ids:
             info(f"Deleting list {list_item['name']}")
             cloudflare.delete_list(list_item["id"])
+            rate_limiter.wait_for_next_request()
 
 def delete_policy(current_policies):
     policy_id = None
@@ -120,6 +161,7 @@ def delete_policy(current_policies):
     if policy_id:
         info(f"Deleting policy [{PREFIX}] Block Ads")
         cloudflare.delete_policy(policy_id)
+        rate_limiter.wait_for_next_request()
 
 def delete_lists(current_lists):
     list_ids_to_delete = []
@@ -137,5 +179,6 @@ def delete_lists(current_lists):
             if list_to_delete:
                 info(f"Deleting list {list_to_delete['name']}")
                 cloudflare.delete_list(list_id)
+                rate_limiter.wait_for_next_request()
     else:
         silent_error("No lists to delete")
