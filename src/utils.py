@@ -1,11 +1,9 @@
 import re
 import time
 from src import (
-    info,
     cloudflare,
-    silent_error,
-    MAX_LIST_SIZE,
-    RATE_LIMIT_INTERVAL
+    info, silent_error,
+    MAX_LIST_SIZE, RATE_LIMIT_INTERVAL
 )
 
 class RateLimiter:
@@ -87,7 +85,7 @@ def update_lists(current_lists, chunked_lists, adlist_name):
                 ]
                 new_list_items = chunked_lists[list_index - 1]
 
-                if list_items_values != new_list_items:
+                if set(list_items_values) != set(new_list_items):
                     info(f"Updating list {list_item['name']}")
                     list_items_array = [{"value": domain} for domain in new_list_items]
 
