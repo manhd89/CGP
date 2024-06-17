@@ -80,7 +80,6 @@ def update_lists(current_lists, chunked_lists, adlist_name):
         if f"{adlist_name}" in list_item["name"]:
             list_index = int(re.search(r'\d+', list_item["name"]).group())
             if list_index in existing_indices and list_index - 1 < len(chunked_lists):
-                info(f"Checking list {list_item['name']} for updates")
 
                 list_items = cloudflare.get_list_items(list_item["id"])
                 list_items_values = [
@@ -88,7 +87,7 @@ def update_lists(current_lists, chunked_lists, adlist_name):
                 ]
                 new_list_items = chunked_lists[list_index - 1]
 
-                if set(list_items_values) != set(new_list_items):
+                if list_items_values != new_list_items:
                     info(f"Updating list {list_item['name']}")
                     list_items_array = [{"value": domain} for domain in new_list_items]
 
