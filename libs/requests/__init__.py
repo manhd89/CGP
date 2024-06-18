@@ -40,17 +40,17 @@ is at <https://requests.readthedocs.io>.
 
 import warnings
 
-import urllib3
+from libs import urllib3
 
 from .exceptions import RequestsDependencyWarning
 
 try:
-    from charset_normalizer import __version__ as charset_normalizer_version
+    from libs.charset_normalizer import __version__ as charset_normalizer_version
 except ImportError:
     charset_normalizer_version = None
 
 try:
-    from chardet import __version__ as chardet_version
+    from libs.chardet import __version__ as chardet_version
 except ImportError:
     chardet_version = None
 
@@ -140,7 +140,7 @@ except ImportError:
     pass
 
 # urllib3's DependencyWarnings should be silenced.
-from urllib3.exceptions import DependencyWarning
+from libs.urllib3.exceptions import DependencyWarning
 
 warnings.simplefilter("ignore", DependencyWarning)
 
