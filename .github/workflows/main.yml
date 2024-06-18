@@ -25,9 +25,6 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
-          
       - name: Cloudflare Gateway Zero Trust 
         run: python -m src
           
