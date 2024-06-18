@@ -39,17 +39,18 @@ is at <https://requests.readthedocs.io>.
 """
 
 import warnings
-from libs import urllib3
+
+import urllib3
 
 from .exceptions import RequestsDependencyWarning
 
 try:
-    from libs.charset_normalizer import __version__ as charset_normalizer_version
+    from charset_normalizer import __version__ as charset_normalizer_version
 except ImportError:
     charset_normalizer_version = None
 
 try:
-    from libs.chardet import __version__ as chardet_version
+    from chardet import __version__ as chardet_version
 except ImportError:
     chardet_version = None
 
@@ -82,7 +83,11 @@ def check_compatibility(urllib3_version, chardet_version, charset_normalizer_ver
         # charset_normalizer >= 2.0.0 < 4.0.0
         assert (2, 0, 0) <= (major, minor, patch) < (4, 0, 0)
     else:
-        raise Exception("You need either charset_normalizer or chardet installed")
+        warnings.warn(
+            "Unable to find acceptable character detection dependency "
+            "(chardet or charset_normalizer).",
+            RequestsDependencyWarning,
+        )
 
 
 def _check_cryptography(cryptography_version):
@@ -100,6 +105,18 @@ def _check_cryptography(cryptography_version):
 
 
 # Check imported dependencies for compatibility.
+try:
+    check_compatibility(
+        urllib3.__version__, chardet_version, charset_normalizer_version
+    )
+except (AssertionError, ValueError):
+    warnings.warn(
+        "urllib3 ({}) or chardet ({})/charset_normalizer ({}) doesn't match a supported "
+        "version!".format(
+            urllib3.__version__, chardet_version, charset_normalizer_version
+        ),
+        RequestsDependencyWarning,
+    )
 
 # Attempt to enable urllib3's fallback for SNI support
 # if the standard library doesn't support SNI or the
@@ -123,7 +140,7 @@ except ImportError:
     pass
 
 # urllib3's DependencyWarnings should be silenced.
-from libs.urllib3.exceptions import DependencyWarning
+from urllib3.exceptions import DependencyWarning
 
 warnings.simplefilter("ignore", DependencyWarning)
 
