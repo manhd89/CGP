@@ -1,6 +1,7 @@
 import os
 import requests
 from configparser import ConfigParser
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from src import info, convert
 
 class DomainConverter:
@@ -43,17 +44,26 @@ class DomainConverter:
         return urls
 
     def download_file(self, url):
-        r = requests.get(url, allow_redirects=True)
-        info(f"Downloaded file from {url} File size: {len(r.content)}")
-        return r.text
-        
+        try:
+            r = requests.get(url, allow_redirects=True)
+            info(f"Downloaded file from {url} File size: {len(r.content)}")
+            return r.text
+        except Exception as e:
+            info(f"Failed to download {url}: {e}")
+            return ""
+
+    def download_files_concurrently(self, urls):
+        content = ""
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_url = {executor.submit(self.download_file, url): url for url in urls}
+            for future in as_completed(future_to_url):
+                result = future.result()
+                content += result
+        return content
+
     def process_urls(self):
-        block_content = ""
-        white_content = ""
-        for url in self.adlist_urls:
-            block_content += self.download_file(url)
-        for url in self.whitelist_urls:
-            white_content += self.download_file(url)
+        block_content = self.download_files_concurrently(self.adlist_urls)
+        white_content = self.download_files_concurrently(self.whitelist_urls)
         
         # Check for dynamic blacklist and whitelist in environment variables
         dynamic_blacklist = os.getenv("DYNAMIC_BLACKLIST", "")
