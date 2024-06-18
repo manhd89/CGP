@@ -27,7 +27,7 @@ from urllib3.poolmanager import PoolManager, proxy_from_url
 from urllib3.util import Timeout as TimeoutSauce
 from urllib3.util import parse_url
 from urllib3.util.retry import Retry
-from urllib3.util.ssl_ import create_urllib3_context
+from libs.urllib3.util.ssl_ import create_urllib3_context
 
 from .auth import _basic_auth_str
 from .compat import basestring, urlparse
