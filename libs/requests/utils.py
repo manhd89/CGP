@@ -21,7 +21,7 @@ from collections import OrderedDict
 
 from libs.urllib3.util import make_headers, parse_url
 
-from . import certs
+from libs import certs
 from .__version__ import __version__
 
 # to_native_string is unused here, but imported here for backwards compatibility
