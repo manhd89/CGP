@@ -2,11 +2,11 @@ import os
 import re
 import time
 import random
-import requests
 from sys import exit
-from loguru import logger
+from libs import requests 
+from libs.loguru import logger
 from functools import wraps
-from dotenv import load_dotenv
+from libs.dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
