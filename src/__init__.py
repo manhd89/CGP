@@ -8,13 +8,6 @@ from libs.loguru import logger
 from functools import wraps
 from libs.dotenv import load_dotenv
 
-import sys
-import os
-
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'libs'))
-)
-
 # Load environment variables
 load_dotenv()
 CF_API_TOKEN = os.getenv("CF_API_TOKEN") or os.environ.get("CF_API_TOKEN")
