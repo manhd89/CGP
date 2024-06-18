@@ -62,8 +62,12 @@ class DomainConverter:
         return content
 
     def process_urls(self):
-        block_content = self.download_files_concurrently(self.adlist_urls)
-        white_content = self.download_files_concurrently(self.whitelist_urls)
+        all_urls = self.adlist_urls + self.whitelist_urls
+        combined_content = self.download_files_concurrently(all_urls)
+        
+        # Split the combined content back into block and white contents
+        block_content = ''.join([self.download_file(url) for url in self.adlist_urls])
+        white_content = ''.join([self.download_file(url) for url in self.whitelist_urls])
         
         # Check for dynamic blacklist and whitelist in environment variables
         dynamic_blacklist = os.getenv("DYNAMIC_BLACKLIST", "")
