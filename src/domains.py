@@ -53,21 +53,22 @@ class DomainConverter:
             return ""
 
     def download_files_concurrently(self, urls):
-        content = ""
+        content_map = {}
         with ThreadPoolExecutor(max_workers=10) as executor:
             future_to_url = {executor.submit(self.download_file, url): url for url in urls}
             for future in as_completed(future_to_url):
-                result = future.result()
-                content += result
-        return content
+                url = future_to_url[future]
+                content = future.result()
+                if url not in content_map:  # Ensure no duplicates
+                    content_map[url] = content
+        return content_map
 
     def process_urls(self):
-        all_urls = self.adlist_urls + self.whitelist_urls
-        combined_content = self.download_files_concurrently(all_urls)
-        
-        # Split the combined content back into block and white contents
-        block_content = ''.join([self.download_file(url) for url in self.adlist_urls])
-        white_content = ''.join([self.download_file(url) for url in self.whitelist_urls])
+        all_urls = list(set(self.adlist_urls + self.whitelist_urls))  # Remove any duplicate URLs
+        downloaded_content = self.download_files_concurrently(all_urls)
+
+        block_content = ''.join([downloaded_content[url] for url in self.adlist_urls if url in downloaded_content])
+        white_content = ''.join([downloaded_content[url] for url in self.whitelist_urls if url in downloaded_content])
         
         # Check for dynamic blacklist and whitelist in environment variables
         dynamic_blacklist = os.getenv("DYNAMIC_BLACKLIST", "")
