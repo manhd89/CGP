@@ -64,13 +64,16 @@ class DomainConverter:
         return content_map
 
     def process_urls(self):
-        all_urls = list(set(self.adlist_urls + self.whitelist_urls))  # Remove any duplicate URLs
+        all_urls = list(set(self.adlist_urls + self.whitelist_urls))
         downloaded_content = self.download_files_concurrently(all_urls)
 
-        block_content = ''.join([downloaded_content[url] for url in self.adlist_urls if url in downloaded_content])
-        white_content = ''.join([downloaded_content[url] for url in self.whitelist_urls if url in downloaded_content])
+        block_content = ''.join(
+            [downloaded_content[url] for url in self.adlist_urls if url in downloaded_content]
+        )
+        white_content = ''.join(
+            [downloaded_content[url] for url in self.whitelist_urls if url in downloaded_content]
+        )
         
-        # Check for dynamic blacklist and whitelist in environment variables
         dynamic_blacklist = os.getenv("DYNAMIC_BLACKLIST", "")
         dynamic_whitelist = os.getenv("DYNAMIC_WHITELIST", "")
         
