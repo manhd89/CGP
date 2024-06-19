@@ -19,11 +19,6 @@ jobs:
         uses: actions/checkout@main
         with:
           fetch-depth: 0
-          
-      - name: Install Python
-        uses: actions/setup-python@main
-        with:
-          python-version: 3.11
 
       - name: Cloudflare Gateway Zero Trust 
         run: python -m src
