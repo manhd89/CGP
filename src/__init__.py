@@ -7,7 +7,6 @@ from libs import requests
 from libs.loguru import logger
 from functools import wraps
 from libs.dotenv import load_dotenv
-from libs.certifi import certifi
 
 # Load environment variables
 load_dotenv()
