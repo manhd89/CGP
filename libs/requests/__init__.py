@@ -39,6 +39,7 @@ is at <https://requests.readthedocs.io>.
 """
 
 import warnings
+
 from libs import urllib3
 
 from .exceptions import RequestsDependencyWarning
@@ -82,7 +83,11 @@ def check_compatibility(urllib3_version, chardet_version, charset_normalizer_ver
         # charset_normalizer >= 2.0.0 < 4.0.0
         assert (2, 0, 0) <= (major, minor, patch) < (4, 0, 0)
     else:
-        raise Exception("You need either charset_normalizer or chardet installed")
+        warnings.warn(
+            "Unable to find acceptable character detection dependency "
+            "(chardet or charset_normalizer).",
+            RequestsDependencyWarning,
+        )
 
 
 def _check_cryptography(cryptography_version):
@@ -100,6 +105,18 @@ def _check_cryptography(cryptography_version):
 
 
 # Check imported dependencies for compatibility.
+try:
+    check_compatibility(
+        urllib3.__version__, chardet_version, charset_normalizer_version
+    )
+except (AssertionError, ValueError):
+    warnings.warn(
+        "urllib3 ({}) or chardet ({})/charset_normalizer ({}) doesn't match a supported "
+        "version!".format(
+            urllib3.__version__, chardet_version, charset_normalizer_version
+        ),
+        RequestsDependencyWarning,
+    )
 
 # Attempt to enable urllib3's fallback for SNI support
 # if the standard library doesn't support SNI or the

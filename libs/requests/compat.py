@@ -7,12 +7,27 @@ between Python 2 and Python 3. It remains for backwards
 compatibility until the next major version.
 """
 
-try:
-    from libs import chardet
-except ImportError:
-    from libs import charset_normalizer as chardet
-
+import importlib
 import sys
+
+# -------------------
+# Character Detection
+# -------------------
+
+
+def _resolve_char_detection():
+    """Find supported character detection libraries."""
+    chardet = None
+    for lib in ("chardet", "charset_normalizer"):
+        if chardet is None:
+            try:
+                chardet = importlib.import_module(lib)
+            except ImportError:
+                pass
+    return chardet
+
+
+chardet = _resolve_char_detection()
 
 # -------
 # Pythons
