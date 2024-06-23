@@ -3,14 +3,30 @@ import re
 import time
 import random
 from sys import exit
-from libs import requests 
-from libs.loguru import logger
 from functools import wraps
-from libs.dotenv import load_dotenv
+from libs import requests
+from libs.loguru import logger
 
-# Load environment variables
-CF_API_TOKEN = os.getenv("CF_API_TOKEN")
-CF_IDENTIFIER = os.getenv("CF_IDENTIFIER")
+# Read .env
+def dot_env(file_path=".env"):
+    env_vars = {}
+    try:
+        with open(file_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+    except FileNotFoundError:
+        raise Exception(f"File {file_path} not found")
+    return env_vars
+
+# Load variables
+env_vars = dot_env()
+
+CF_API_TOKEN = os.getenv("CF_API_TOKEN") or env_vars.get("CF_API_TOKEN")
+CF_IDENTIFIER = os.getenv("CF_IDENTIFIER") or env_vars.get("CF_IDENTIFIER")
+
 if not CF_API_TOKEN or not CF_IDENTIFIER:
     raise Exception("Missing Cloudflare credentials")
 
