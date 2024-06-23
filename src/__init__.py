@@ -2,7 +2,6 @@ import os
 import re
 import time
 import random
-import threading
 from sys import exit
 from libs import requests 
 from libs.loguru import logger
@@ -93,17 +92,16 @@ class RateLimiter:
     def __init__(self, interval):
         self.interval = interval
         self.timestamp = time.time()
-        self.lock = threading.Lock()
 
     def wait_for_next_request(self):
-        with self.lock:
-            now = time.time()
-            sleep_time = max(0, self.timestamp + self.interval - now)
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-            self.timestamp = time.time()
+        now = time.time()
+        elapsed = now - self.timestamp
+        sleep_time = max(0, self.interval - elapsed)
+        if (sleep_time > 0):
+            time.sleep(sleep_time)
+        self.timestamp = time.time()
 
-rate_limiter = RateLimiter(interval=1.0)
+rate_limiter = RateLimiter(1.0)
 
 # Function to limit requests
 def rate_limited_request(func):
