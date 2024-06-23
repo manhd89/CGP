@@ -16,7 +16,10 @@ def dot_env(file_path=".env"):
                 line = line.strip()
                 if line and not line.startswith('#'):
                     key, value = line.split('=', 1)
-                    env_vars[key.strip()] = value.strip()
+                    key = key.strip()
+                    value = value.strip()
+                    value = re.sub(r'^["\'<]*(.*?)["\'>]*$', r'\1', value)
+                    env_vars[key] = value
     except FileNotFoundError:
         raise Exception(f"File {file_path} not found")
     return env_vars
