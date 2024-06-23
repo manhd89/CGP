@@ -2,7 +2,6 @@ import os
 import re
 import time
 import random
-import threading
 from sys import exit
 from libs import requests 
 from libs.loguru import logger
@@ -20,6 +19,7 @@ if not CF_API_TOKEN or not CF_IDENTIFIER:
 PREFIX = "AdBlock-DNS-Filters"
 MAX_LIST_SIZE = 1000
 MAX_LISTS = 300
+RATE_LIMIT_INTERVAL = 1.0
 
 # Compile regex patterns
 replace_pattern = re.compile(
@@ -38,7 +38,7 @@ session = requests.Session()
 session.headers.update({
     "Authorization": f"Bearer {CF_API_TOKEN}",
     "Content-Type": "application/json",
-    "Accept-Encoding": "gzip, deflate"
+    "Accept-Encoding": "gzip, deflate" 
 })
 
 BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway"
@@ -87,26 +87,3 @@ def silent_error(message):
 
 def info(message):
     logger.info(message)
-
-# Rate limiter
-class RateLimiter:
-    def __init__(self, interval):
-        self.interval = interval
-        self.timestamp = time.time()
-        self.lock = threading.Lock()
-
-    def wait_for_next_request(self):
-        with self.lock:
-            now = time.time()
-            sleep_time = max(0, self.timestamp + self.interval - now)
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-            self.timestamp = time.time()
-
-# Function to limit requests
-def rate_limited_request(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        RateLimiter(1.0).wait_for_next_request()
-        return func(*args, **kwargs)
-    return wrapper
