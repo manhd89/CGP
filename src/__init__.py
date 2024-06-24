@@ -37,10 +37,10 @@ if not CF_API_TOKEN or not CF_IDENTIFIER:
     raise Exception("Missing Cloudflare credentials")
 
 # Constants
-PREFIX = "AdBlock-DNS-Filters"
-MAX_LIST_SIZE = 1000
 MAX_LISTS = 300
-RATE_LIMIT_INTERVAL = 0.5
+MAX_LIST_SIZE = 1000
+RATE_LIMIT_INTERVAL = 1.0
+PREFIX = "AdBlock-DNS-Filters"
 
 # Compile regex patterns
 replace_pattern = re.compile(
