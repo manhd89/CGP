@@ -44,7 +44,7 @@ def perform_request(method, endpoint, headers, body=None):
         elif status >= 500:
             error_message = f"{status} Server Error"
 
-        logger.error(f"{error_message} for url: {url}")
+        info(f"{error_message} for url: {url}")
         raise HTTPException(error_message)
 
     if response.getheader('Content-Encoding') == 'gzip':
