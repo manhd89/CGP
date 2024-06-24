@@ -142,6 +142,20 @@ def wait_random_exponential(attempt_number, multiplier=1, max_wait=10):
 def retry_if_exception_type(exceptions):
     return lambda e: isinstance(e, exceptions)
 
+retry_config = {
+    'stop': stop_never,
+    'wait': lambda attempt_number: wait_random_exponential(
+        attempt_number, multiplier=1, max_wait=10
+    ),
+    'retry': retry_if_exception_type((HTTPException,)),
+    'after': lambda retry_state: info(
+        f"Retrying ({retry_state['attempt_number']}): {retry_state['outcome']}"
+    ),
+    'before_sleep': lambda retry_state: info(
+        f"Sleeping before next retry ({retry_state['attempt_number']})"
+    )
+}
+
 # Rate limiter
 class RateLimiter:
     def __init__(self, interval):
