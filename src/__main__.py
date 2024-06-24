@@ -1,5 +1,5 @@
 import re
-from . import (
+from src import (
     info, error, silent_error,
     utils, domains, cloudflare, 
     PREFIX, MAX_LISTS, MAX_LIST_SIZE,
