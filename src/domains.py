@@ -48,11 +48,9 @@ class DomainConverter:
         conn = http.client.HTTPSConnection(parsed_url.netloc)
         conn.request("GET", parsed_url.path)
         response = conn.getresponse()
-        if response.status != 200:
-            raise Exception(f"Failed to download file from {url}, status code: {response.status}")
         data = response.read().decode('utf-8')
         conn.close()
-        info(f"Downloaded file from {url}. File size: {len(data)}")
+        info(f"Downloaded file from {url} File size: {len(data)}")
         return data
         
     def process_urls(self):
