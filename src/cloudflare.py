@@ -15,10 +15,10 @@ retry_config = {
     ),
     'retry': retry_if_exception_type((HTTPException,)),
     'after': lambda retry_state: info(
-        f"Retrying ({retry_state['attempt_number']}): {retry_state['outcome'].exception()}"
+        f"Retrying ({retry_state.attempt_number}): {retry_state.outcome.exception()}"
     ),
     'before_sleep': lambda retry_state: info(
-        f"Sleeping before next retry ({retry_state['attempt_number']})"
+        f"Sleeping before next retry ({retry_state.attempt_number})"
     )
 }
 
