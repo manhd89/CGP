@@ -40,6 +40,7 @@ if not CF_API_TOKEN or not CF_IDENTIFIER:
 PREFIX = "AdBlock-DNS-Filters"
 MAX_LIST_SIZE = 1000
 MAX_LISTS = 300
+RATE_LIMIT_INTERVAL = 0.5
 
 # Compile regex patterns
 replace_pattern = re.compile(
@@ -155,7 +156,7 @@ class RateLimiter:
             time.sleep(sleep_time)
         self.timestamp = time.time()
 
-rate_limiter = RateLimiter(1.0)
+rate_limiter = RateLimiter(RATE_LIMIT_INTERVAL)
 
 # Function to limit requests
 def rate_limited_request(func):
