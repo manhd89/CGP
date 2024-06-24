@@ -1,11 +1,8 @@
 import json
-import http.client
-import gzip
-from io import BytesIO
 from http.client import HTTPException
-from src import (
-    info, conn, headers, BASE_URL, MAX_LIST_SIZE, rate_limited_request,
-    retry, stop_never, wait_random_exponential, retry_if_exception_type
+from . import (
+    info, headers, BASE_URL, MAX_LIST_SIZE, rate_limited_request,
+    perform_request, retry, stop_never, wait_random_exponential, retry_if_exception_type
 )
 
 retry_config = {
@@ -21,39 +18,6 @@ retry_config = {
         f"Sleeping before next retry ({retry_state['attempt_number']})"
     )
 }
-
-def perform_request(method, endpoint, headers, body=None):
-    url = BASE_URL + endpoint
-    conn.request(method, url, body, headers)
-    response = conn.getresponse()
-    data = response.read()
-    status = response.status
-
-    if status >= 400:
-        if status == 400:
-            error_message = f"400 Client Error: Bad Request for url: {url}"
-        elif status == 401:
-            error_message = f"401 Client Error: Unauthorized for url: {url}"
-        elif status == 403:
-            error_message = f"403 Client Error: Forbidden for url: {url}"
-        elif status == 404:
-            error_message = f"404 Client Error: Not Found for url: {url}"
-        elif status == 429:
-            error_message = f"429 Client Error: Too Many Requests for url: {url}"
-        elif status >= 500:
-            error_message = f"{status} Server Error for url: {url}"
-        else:
-            error_message = f"HTTP request failed with status {status} for url: {url}"
-
-        info(f"{error_message}")
-        raise HTTPException(error_message)
-
-    if response.getheader('Content-Encoding') == 'gzip':
-        buf = BytesIO(data)
-        f = gzip.GzipFile(fileobj=buf)
-        data = f.read()
-
-    return response.status, json.loads(data.decode('utf-8'))
 
 @retry(**retry_config)
 def get_current_lists():
