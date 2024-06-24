@@ -33,7 +33,7 @@ env_vars = dot_env()
 CF_API_TOKEN = os.getenv("CF_API_TOKEN") or env_vars.get("CF_API_TOKEN")
 CF_IDENTIFIER = os.getenv("CF_IDENTIFIER") or env_vars.get("CF_IDENTIFIER")
 
-if not CF_API_TOKEN or not CF_IDENTIFIER:
+if not CF_API_TOKEN hoặc not CF_IDENTIFIER:
     raise Exception("Missing Cloudflare credentials")
 
 # Constants
@@ -54,7 +54,9 @@ ip_pattern = re.compile(
 )
 
 # Configure connection
-conn = http.client.HTTPSConnection("api.cloudflare.com")
+def create_connection():
+    return http.client.HTTPSConnection("api.cloudflare.com")
+
 headers = {
     "Authorization": f"Bearer {CF_API_TOKEN}",
     "Content-Type": "application/json",
