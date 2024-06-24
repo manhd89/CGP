@@ -4,10 +4,7 @@ import time
 import random
 import logging
 import http.client
-import json
-import gzip
 from functools import wraps
-from io import BytesIO
 from src.colorlog import logger
 
 # Read .env
@@ -37,31 +34,17 @@ if not CF_API_TOKEN or not CF_IDENTIFIER:
     raise Exception("Missing Cloudflare credentials")
 
 # Constants
+BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway"
 PREFIX = "AdBlock-DNS-Filters"
 MAX_LIST_SIZE = 1000
 MAX_LISTS = 300
 
-# Compile regex patterns
-replace_pattern = re.compile(
-    r"(^([0-9.]+|[0-9a-fA-F:.]+)\s+|^(\|\||@@\|\||\*\.|\*))"
-)
-domain_pattern = re.compile(
-    r"^([a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?\.)*"
-    r"[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?$"
-)
-ip_pattern = re.compile(
-    r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
-)
-
-# Configure connection
-conn = http.client.HTTPSConnection("api.cloudflare.com")
+# Configure headers
 headers = {
     "Authorization": f"Bearer {CF_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept-Encoding": "gzip, deflate"
 }
-
-BASE_URL = f"/client/v4/accounts/{CF_IDENTIFIER}/gateway"
 
 # Retry decorator
 def retry(stop=None, wait=None, retry=None, after=None, before_sleep=None):
