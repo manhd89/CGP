@@ -1,16 +1,17 @@
-import json
-import http.client
+import os
+import re
 import gzip
-from io import BytesIO
-import random
+import json
 import time
+import random
+import http.client
+from sys import exit
+from io import BytesIO
+from functools import wraps
 from src.colorlog import logger
 from http.client import HTTPException
-from sys import exit
-import re
-import os
-from functools import wraps
 
+# Read .env variables 
 def dot_env(file_path=".env"):
     env_vars = {}
     try:
@@ -29,16 +30,18 @@ def dot_env(file_path=".env"):
 
 env_vars = dot_env()
 
+# Load environment or .env variables
 CF_API_TOKEN = os.getenv("CF_API_TOKEN") or env_vars.get("CF_API_TOKEN")
 CF_IDENTIFIER = os.getenv("CF_IDENTIFIER") or env_vars.get("CF_IDENTIFIER")
-
 if not CF_API_TOKEN or not CF_IDENTIFIER:
     raise Exception("Missing Cloudflare credentials")
 
+# Constants
 PREFIX = "AdBlock-DNS-Filters"
 MAX_LIST_SIZE = 1000
 MAX_LISTS = 300
 
+# Compile regex patterns
 replace_pattern = re.compile(
     r"(^([0-9.]+|[0-9a-fA-F:.]+)\s+|^(\|\||@@\|\||\*\.|\*))"
 )
@@ -61,6 +64,7 @@ def silent_error(message):
 def info(message):
     logger.info(message)
     
+# Configure connection
 def perform_request(method, endpoint, body=None):
     conn = http.client.HTTPSConnection("api.cloudflare.com")
     
@@ -70,9 +74,7 @@ def perform_request(method, endpoint, body=None):
         "Accept-Encoding": "gzip, deflate"
     }
     
-    BASE_URL = f"/client/v4/accounts/{CF_IDENTIFIER}/gateway"
-    
-    url = f"https://api.cloudflare.com{BASE_URL}{endpoint}"
+    url = f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway{endpoint}"
     conn.request(method, url, body, headers)
     response = conn.getresponse()
     data = response.read()
@@ -105,6 +107,7 @@ def perform_request(method, endpoint, body=None):
 
     return response.status, json.loads(data.decode('utf-8'))
 
+# Retry decorator
 def retry(stop=None, wait=None, retry=None, after=None, before_sleep=None):
     def decorator(func):
         @wraps(func)
@@ -128,6 +131,7 @@ def retry(stop=None, wait=None, retry=None, after=None, before_sleep=None):
         return wrapper
     return decorator
 
+# Retry utility functions
 def stop_never(attempt_number):
     return False
 
@@ -137,6 +141,7 @@ def wait_random_exponential(attempt_number, multiplier=1, max_wait=10):
 def retry_if_exception_type(exceptions):
     return lambda e: isinstance(e, exceptions)
 
+# Rate limiter
 class RateLimiter:
     def __init__(self, interval):
         self.interval = interval
@@ -152,6 +157,7 @@ class RateLimiter:
 
 rate_limiter = RateLimiter(1.0)
 
+# Function to limit requests
 def rate_limited_request(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
