@@ -1,13 +1,13 @@
 import os
 import re
 import time
+import json
+import gzip
 import random
 import logging
 import http.client
-import json
-import gzip
-from functools import wraps
 from io import BytesIO
+from functools import wraps
 from src.colorlog import logger
 from http.client import HTTPException
 
@@ -123,7 +123,7 @@ class RateLimiter:
             time.sleep(sleep_time)
         self.timestamp = time.time()
 
-rate_limiter = RateLimiter(0.5)
+rate_limiter = RateLimiter(1.0)
 
 # Function to limit requests
 def rate_limited_request(func):
