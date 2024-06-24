@@ -131,3 +131,40 @@ def rate_limited_request(func):
         rate_limiter.wait_for_next_request()
         return func(*args, **kwargs)
     return wrapper
+
+# Function to perform HTTP requests
+def perform_request(method, endpoint, headers, body=None):
+    url = BASE_URL + endpoint  # Construct full URL
+    conn.request(method, url, body, headers)
+    response = conn.getresponse()
+    data = response.read()
+    status = response.status
+
+    # Handle HTTP errors
+    if status >= 400:
+        error_message = ""
+        if status == 400:
+            error_message = f"400 Client Error: Bad Request for url: {url}"
+        elif status == 401:
+            error_message = f"401 Client Error: Unauthorized for url: {url}"
+        elif status == 403:
+            error_message = f"403 Client Error: Forbidden for url: {url}"
+        elif status == 404:
+            error_message = f"404 Client Error: Not Found for url: {url}"
+        elif status == 429:
+            error_message = f"429 Client Error: Too Many Requests for url: {url}"
+        elif status >= 500:
+            error_message = f"{status} Server Error for url: {url}"
+        else:
+            error_message = f"HTTP request failed with status {status} for url: {url}"
+
+        info(error_message)
+        raise HTTPException(error_message)
+
+    # Handle gzip-encoded responses
+    if response.getheader('Content-Encoding') == 'gzip':
+        buf = BytesIO(data)
+        f = gzip.GzipFile(fileobj=buf)
+        data = f.read()
+
+    return response.status, json.loads(data.decode('utf-8'))
