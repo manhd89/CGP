@@ -54,9 +54,7 @@ ip_pattern = re.compile(
 )
 
 # Configure connection
-def create_connection():
-    return http.client.HTTPSConnection("api.cloudflare.com")
-
+conn = http.client.HTTPSConnection("api.cloudflare.com")
 headers = {
     "Authorization": f"Bearer {CF_API_TOKEN}",
     "Content-Type": "application/json",
@@ -124,7 +122,7 @@ class RateLimiter:
             time.sleep(sleep_time)
         self.timestamp = time.time()
 
-rate_limiter = RateLimiter(0.7)
+rate_limiter = RateLimiter(1.0)
 
 # Function to limit requests
 def rate_limited_request(func):
