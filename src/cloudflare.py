@@ -29,18 +29,12 @@ def perform_request(method, endpoint, headers, body=None):
     data = response.read()
 
     if response.status >= 400:
-        if response.status == 400:
-            raise HTTPException("Bad request", status=response.status)
-        elif response.status == 401:
-            raise HTTPException("Unauthorized", status=response.status)
-        elif response.status == 403:
-            raise HTTPException("Forbidden", status=response.status)
-        elif response.status == 404:
-            raise HTTPException("Not found", status=response.status)
-        elif response.status == 429:
-            raise HTTPException("Too many requests", status=response.status)
+        if response.status == 429:
+            raise HTTPException("Too many requests")
+        elif response.status >= 400 and response.status < 500:
+            raise HTTPException("Client error")
         elif response.status >= 500:
-            raise HTTPException("Server error", status=response.status)
+            raise HTTPException("Server error")
         else:
             raise HTTPException(f"HTTP request failed with status {response.status}")
 
