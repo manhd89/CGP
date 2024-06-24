@@ -27,16 +27,25 @@ def perform_request(method, endpoint, headers, body=None):
     conn.request(method, url, body, headers)
     response = conn.getresponse()
     data = response.read()
+    status = response.status
 
-    if response.status >= 400:
-        if response.status == 429:
-            raise HTTPException("Too many requests")
-        elif response.status >= 400 and response.status < 500:
-            raise HTTPException("Client error")
-        elif response.status >= 500:
-            raise HTTPException("Server error")
-        else:
-            raise HTTPException(f"HTTP request failed with status {response.status}")
+    if status >= 400:
+        error_message = f"HTTP request failed with status {status}"
+        if status == 400:
+            error_message = "400 Client Error: Bad Request"
+        elif status == 401:
+            error_message = "401 Client Error: Unauthorized"
+        elif status == 403:
+            error_message = "403 Client Error: Forbidden"
+        elif status == 404:
+            error_message = "404 Client Error: Not Found"
+        elif status == 429:
+            error_message = "429 Client Error: Too Many Requests"
+        elif status >= 500:
+            error_message = f"{status} Server Error"
+
+        logger.error(f"{error_message} for url: {url}")
+        raise HTTPException(error_message)
 
     if response.getheader('Content-Encoding') == 'gzip':
         buf = BytesIO(data)
@@ -44,7 +53,7 @@ def perform_request(method, endpoint, headers, body=None):
         data = f.read()
 
     return response.status, json.loads(data.decode('utf-8'))
-    
+
 @retry(**retry_config)
 def get_current_lists():
     status, data = perform_request("GET", "/lists", headers)
