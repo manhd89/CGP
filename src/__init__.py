@@ -9,6 +9,7 @@ import gzip
 from functools import wraps
 from io import BytesIO
 from src.colorlog import logger
+from http.client import HTTPException
 
 # Read .env
 def dot_env(file_path=".env"):
@@ -140,7 +141,6 @@ def perform_request(method, endpoint, headers, body=None):
     data = response.read()
     status = response.status
 
-    # Handle HTTP errors
     if status >= 400:
         error_message = ""
         if status == 400:
