@@ -30,7 +30,6 @@ def perform_request(method, endpoint, headers, body=None):
     status = response.status
 
     if status >= 400:
-        error_message = f"HTTP request failed with status {status} for url: {url}"
         if status == 400:
             error_message = f"400 Client Error: Bad Request for url: {url}"
         elif status == 401:
@@ -43,6 +42,8 @@ def perform_request(method, endpoint, headers, body=None):
             error_message = f"429 Client Error: Too Many Requests for url: {url}"
         elif status >= 500:
             error_message = f"{status} Server Error for url: {url}"
+        else:
+            error_message = f"HTTP request failed with status {status} for url: {url}"
 
         info(f"{error_message}")
         raise HTTPException(error_message)
