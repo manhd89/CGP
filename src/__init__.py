@@ -134,7 +134,7 @@ def rate_limited_request(func):
 
 # Function to perform HTTP requests
 def perform_request(method, endpoint, headers, body=None):
-    url = BASE_URL + endpoint  # Construct full URL
+    url = f"https://api.cloudflare.com" + BASE_URL + endpoint
     conn.request(method, url, body, headers)
     response = conn.getresponse()
     data = response.read()
@@ -161,7 +161,6 @@ def perform_request(method, endpoint, headers, body=None):
         info(error_message)
         raise HTTPException(error_message)
 
-    # Handle gzip-encoded responses
     if response.getheader('Content-Encoding') == 'gzip':
         buf = BytesIO(data)
         f = gzip.GzipFile(fileobj=buf)
