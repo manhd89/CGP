@@ -23,17 +23,34 @@ retry_config = {
 }
 
 def perform_request(method, endpoint, headers, body=None):
-    url = BASE_URL + endpoint
-    conn.request(method, url, body, headers)
-    response = conn.getresponse()
-    data = response.read()
-    if response.status >= 400:
-        raise HTTPException(f"HTTP request failed with status {response.status}")
-    if response.getheader('Content-Encoding') == 'gzip':
-        buf = BytesIO(data)
-        f = gzip.GzipFile(fileobj=buf)
-        data = f.read()
-    return response.status, json.loads(data.decode('utf-8'))
+    parsed_url = f"{BASE_URL}{endpoint}"
+    conn = http.client.HTTPSConnection(parsed_url)
+    
+    try:
+        conn.request(method, endpoint, body, headers)
+        response = conn.getresponse()
+        data = response.read()
+        
+        if response.status >= 400:
+            raise HTTPException(f"HTTP request failed with status {response.status}")
+        
+        if response.getheader('Content-Encoding') == 'gzip':
+            buf = BytesIO(data)
+            f = gzip.GzipFile(fileobj=buf)
+            data = f.read()
+        
+        return response.status, json.loads(data.decode('utf-8'))
+    
+    except HTTPException as e:
+        info(f"HTTPException: {str(e)}")
+        raise
+    
+    except Exception as e:
+        info(f"Exception: {str(e)}")
+        raise
+    
+    finally:
+        conn.close()
 
 @retry(**retry_config)
 def get_current_lists():
