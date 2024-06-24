@@ -1,10 +1,9 @@
 import json
-import http.client
 import gzip
 from io import BytesIO
 from http.client import HTTPException
 from src import (
-    info, conn, headers, BASE_URL, MAX_LIST_SIZE, rate_limited_request,
+    info, create_connection, headers, BASE_URL, MAX_LIST_SIZE, rate_limited_request,
     retry, stop_never, wait_random_exponential, retry_if_exception_type
 )
 
@@ -23,17 +22,21 @@ retry_config = {
 }
 
 def perform_request(method, endpoint, headers, body=None):
-    url = BASE_URL + endpoint
-    conn.request(method, url, body, headers)
-    response = conn.getresponse()
-    data = response.read()
-    if response.status >= 400:
-        raise HTTPException(f"HTTP request failed with status {response.status}")
-    if response.getheader('Content-Encoding') == 'gzip':
-        buf = BytesIO(data)
-        f = gzip.GzipFile(fileobj=buf)
-        data = f.read()
-    return response.status, json.loads(data.decode('utf-8'))
+    conn = create_connection()
+    try:
+        url = BASE_URL + endpoint
+        conn.request(method, url, body, headers)
+        response = conn.getresponse()
+        data = response.read()
+        if response.status >= 400:
+            raise HTTPException(f"HTTP request failed with status {response.status}")
+        if response.getheader('Content-Encoding') == 'gzip':
+            buf = BytesIO(data)
+            f = gzip.GzipFile(fileobj=buf)
+            data = f.read()
+        return response.status, json.loads(data.decode('utf-8'))
+    finally:
+        conn.close()
 
 @retry(**retry_config)
 def get_current_lists():
