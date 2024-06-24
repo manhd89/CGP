@@ -122,7 +122,7 @@ class RateLimiter:
             time.sleep(sleep_time)
         self.timestamp = time.time()
 
-rate_limiter = RateLimiter(1.0)
+rate_limiter = RateLimiter(0.7)
 
 # Function to limit requests
 def rate_limited_request(func):
