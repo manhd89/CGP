@@ -23,6 +23,7 @@ retry_config = {
 }
 
 def perform_request(method, endpoint, headers, body=None):
+    url = BASE_URL + endpoint
     conn.request(method, url, body, headers)
     response = conn.getresponse()
     data = response.read()
@@ -41,7 +42,7 @@ def perform_request(method, endpoint, headers, body=None):
         elif status == 429:
             error_message = f"429 Client Error: Too Many Requests for url: {url}"
         elif status >= 500:
-            error_message = f"{status} Server Error for url: {BASE_URL} + {url}"
+            error_message = f"{status} Server Error for url: {url}"
 
         info(f"{error_message}")
         raise HTTPException(error_message)
