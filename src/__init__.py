@@ -39,7 +39,7 @@ if not CF_API_TOKEN or not CF_IDENTIFIER:
 # Constants
 MAX_LISTS = 300
 MAX_LIST_SIZE = 1000
-RATE_LIMIT_INTERVAL = 1.0
+RATE_LIMIT_INTERVAL = 0.4
 PREFIX = "AdBlock-DNS-Filters"
 
 # Compile regex patterns
