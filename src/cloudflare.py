@@ -1,6 +1,6 @@
 import json
 from http.client import HTTPException
-from . import (
+from src import (
     info, rate_limited_request, perform_request,
     retry, stop_never, wait_random_exponential, retry_if_exception_type
 )
