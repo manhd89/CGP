@@ -9,6 +9,7 @@ from http.client import HTTPException
 from sys import exit
 import re
 import os
+from functools import wraps
 
 def dot_env(file_path=".env"):
     env_vars = {}
