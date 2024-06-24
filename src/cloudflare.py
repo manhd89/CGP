@@ -27,14 +27,30 @@ def perform_request(method, endpoint, headers, body=None):
     conn.request(method, url, body, headers)
     response = conn.getresponse()
     data = response.read()
+
     if response.status >= 400:
-        raise HTTPException(f"HTTP request failed with status {response.status}")
+        if response.status == 400:
+            raise HTTPException("Bad request", status=response.status)
+        elif response.status == 401:
+            raise HTTPException("Unauthorized", status=response.status)
+        elif response.status == 403:
+            raise HTTPException("Forbidden", status=response.status)
+        elif response.status == 404:
+            raise HTTPException("Not found", status=response.status)
+        elif response.status == 429:
+            raise HTTPException("Too many requests", status=response.status)
+        elif response.status >= 500:
+            raise HTTPException("Server error", status=response.status)
+        else:
+            raise HTTPException(f"HTTP request failed with status {response.status}")
+
     if response.getheader('Content-Encoding') == 'gzip':
         buf = BytesIO(data)
         f = gzip.GzipFile(fileobj=buf)
         data = f.read()
-    return response.status, json.loads(data.decode('utf-8'))
 
+    return response.status, json.loads(data.decode('utf-8'))
+    
 @retry(**retry_config)
 def get_current_lists():
     status, data = perform_request("GET", "/lists", headers)
