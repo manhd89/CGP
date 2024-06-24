@@ -3,7 +3,7 @@ import re
 import time
 import random
 import logging
-import requests
+from libs import requests
 from functools import wraps
 from src.colorlog import logger
 
