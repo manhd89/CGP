@@ -1,8 +1,8 @@
 import json
 from http.client import HTTPException
 from . import (
-    info, headers, BASE_URL, MAX_LIST_SIZE, rate_limited_request,
-    perform_request, retry, stop_never, wait_random_exponential, retry_if_exception_type
+    info, headers, MAX_LIST_SIZE, rate_limited_request,perform_request,
+    retry, stop_never, wait_random_exponential, retry_if_exception_type
 )
 
 retry_config = {
