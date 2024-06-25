@@ -16,7 +16,7 @@ from http.client import HTTPException
 # Constants
 MAX_LISTS = 300
 MAX_LIST_SIZE = 1000
-RATE_LIMIT_INTERVAL = 0.5
+RATE_LIMIT_INTERVAL = 1.0
 PREFIX = "AdBlock-DNS-Filters"
 
 # Read .env variables 
