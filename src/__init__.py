@@ -69,10 +69,9 @@ def info(message):
 class HTTPException(Exception):
     pass
 
-def perform_request(method: str, endpoint: str, body: Optional[str] = None) -> Tuple[int, dict]:
+def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] = None, timeout: int = 10) -> Tuple[int, dict]:
     context = ssl.create_default_context()
-
-    conn = http.client.HTTPSConnection("api.cloudflare.com", context=context)
+    conn = http.client.HTTPSConnection("api.cloudflare.com", context=context, timeout=timeout)
 
     headers = {
         "Authorization": f"Bearer {CF_API_TOKEN}",
@@ -84,6 +83,7 @@ def perform_request(method: str, endpoint: str, body: Optional[str] = None) -> T
     full_url = f"https://api.cloudflare.com{url}"
 
     try:
+        logging.info(f"Request {method} {full_url}")
         conn.request(method, url, body, headers)
         response = conn.getresponse()
         data = response.read()
@@ -91,7 +91,7 @@ def perform_request(method: str, endpoint: str, body: Optional[str] = None) -> T
 
         if status >= 400:
             error_message = get_error_message(status, full_url)
-            info(error_message)
+            logging.error(error_message)
             raise HTTPException(error_message)
 
         content_encoding = response.getheader('Content-Encoding')
@@ -107,10 +107,10 @@ def perform_request(method: str, endpoint: str, body: Optional[str] = None) -> T
     except HTTPException:
         raise
     except json.JSONDecodeError:
-        info("Failed to decode JSON response")
+        logging.error("Failed to decode JSON response")
         raise HTTPException("Failed to decode JSON response")
     except Exception as e:
-        info(f"Request failed: {e}")
+        logging.error(f"Request failed: {e}")
         raise HTTPException(f"Request failed: {e}")
     finally:
         conn.close()
