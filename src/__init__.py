@@ -70,7 +70,6 @@ class HTTPException(Exception):
     pass
 
 def perform_request(method: str, endpoint: str, body: Optional[str] = None) -> Tuple[int, dict]:
-    # Create an SSL context to verify SSL certificates
     context = ssl.create_default_context()
     
     conn = http.client.HTTPSConnection("api.cloudflare.com", context=context)
