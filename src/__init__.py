@@ -91,7 +91,7 @@ def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] =
 
         if status >= 400:
             error_message = get_error_message(status, full_url)
-            logging.error(error_message)
+            silent_error(error_message)
             raise HTTPException(error_message)
 
         content_encoding = response.getheader('Content-Encoding')
@@ -107,10 +107,10 @@ def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] =
     except HTTPException:
         raise
     except json.JSONDecodeError:
-        logging.error("Failed to decode JSON response")
+        silent_error("Failed to decode JSON response")
         raise HTTPException("Failed to decode JSON response")
     except Exception as e:
-        logging.error(f"Request failed: {e}")
+        silent_error(f"Request failed: {e}")
         raise HTTPException(f"Request failed: {e}")
     finally:
         conn.close()
