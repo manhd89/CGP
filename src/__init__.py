@@ -1,5 +1,6 @@
 import os
 import re
+import ssl
 import gzip
 import json
 import time
@@ -69,7 +70,10 @@ class HTTPException(Exception):
     pass
 
 def perform_request(method: str, endpoint: str, body: Optional[str] = None) -> Tuple[int, dict]:
-    conn = http.client.HTTPSConnection("api.cloudflare.com")
+    # Create an SSL context to verify SSL certificates
+    context = ssl.create_default_context()
+    
+    conn = http.client.HTTPSConnection("api.cloudflare.com", context=context)
     
     headers = {
         "Authorization": f"Bearer {CF_API_TOKEN}",
@@ -118,7 +122,7 @@ def get_error_message(status: int, url: str) -> str:
         return f"{status} Server Error for url: {url}"
     else:
         return f"HTTP request failed with status {status} for url: {url}"
-
+        
 # Retry decorator
 def retry(stop=None, wait=None, retry=None, after=None, before_sleep=None):
     def decorator(func):
