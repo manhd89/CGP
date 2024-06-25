@@ -83,7 +83,6 @@ def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] =
     full_url = f"https://api.cloudflare.com{url}"
 
     try:
-        info(f"Request {method} {full_url}")
         conn.request(method, url, body, headers)
         response = conn.getresponse()
         data = response.read()
