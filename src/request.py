@@ -5,9 +5,11 @@ import time
 import random
 import http.client
 import socket
+import zlib
 from io import BytesIO
 from functools import wraps
 from typing import Optional, Tuple
+from urllib.parse import urlencode
 from src import info, silent_error, error, RATE_LIMIT_INTERVAL, CF_IDENTIFIER, CF_API_TOKEN
 
 class HTTPException(Exception):
@@ -19,16 +21,36 @@ def get_error_message(status: int, url: str) -> str:
         401: "401 Client Error: Unauthorized",
         403: "403 Client Error: Forbidden",
         404: "404 Client Error: Not Found",
-        429: "429 Client Error: Too Many Requests"
+        405: "405 Client Error: Method Not Allowed",
+        406: "406 Client Error: Not Acceptable",
+        408: "408 Client Error: Request Timeout",
+        409: "409 Client Error: Conflict",
+        410: "410 Client Error: Gone",
+        411: "411 Client Error: Length Required",
+        412: "412 Client Error: Precondition Failed",
+        413: "413 Client Error: Payload Too Large",
+        414: "414 Client Error: URI Too Long",
+        415: "415 Client Error: Unsupported Media Type",
+        416: "416 Client Error: Range Not Satisfiable",
+        417: "417 Client Error: Expectation Failed",
+        429: "429 Client Error: Too Many Requests",
+        500: "500 Server Error: Internal Server Error",
+        501: "501 Server Error: Not Implemented",
+        502: "502 Server Error: Bad Gateway",
+        503: "503 Server Error: Service Unavailable",
+        504: "504 Server Error: Gateway Timeout",
+        505: "505 Server Error: HTTP Version Not Supported"
     }
     if status in error_messages:
         return f"{error_messages[status]} for url: {url}"
+    elif status >= 400 and status < 500:
+        return f"{status} Client Error for url: {url}"
     elif status >= 500:
         return f"{status} Server Error for url: {url}"
     else:
         return f"HTTP request failed with status {status} for url: {url}"
 
-def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] = None, timeout: int = 10) -> Tuple[int, dict]:
+def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] = None, params: Optional[dict] = None, timeout: int = 10) -> Tuple[int, dict]:
     context = ssl.create_default_context()
     conn = http.client.HTTPSConnection("api.cloudflare.com", context=context, timeout=timeout)
 
@@ -39,6 +61,8 @@ def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] =
     }
 
     url = f"/client/v4/accounts/{CF_IDENTIFIER}/gateway{endpoint}"
+    if params:
+        url += f"?{urlencode(params)}"
     full_url = f"https://api.cloudflare.com{url}"
 
     try:
@@ -46,7 +70,7 @@ def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] =
         response = conn.getresponse()
         data = response.read()
         status = response.status
-        
+
         if status == 400:
             error_message = get_error_message(status, full_url)
             error(error_message)
