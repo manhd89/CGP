@@ -8,7 +8,10 @@ import random
 import http.client
 import urllib.parse
 from functools import wraps
-from src import info, silent_error, error, RATE_LIMIT_INTERVAL, CF_IDENTIFIER, CF_API_TOKEN
+from src import (
+    info, silent_error, error, 
+    RATE_LIMIT_INTERVAL, CF_IDENTIFIER, CF_API_TOKEN
+)
 
 class RequestException(Exception):
     pass
