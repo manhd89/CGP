@@ -1,6 +1,6 @@
 import json
 from src import MAX_LIST_SIZE
-from src.requests import session, retry, retry_config
+from src.requests import session, retry, retry_config, rate_limited_request
 
 @retry(**retry_config)
 def get_current_lists():
