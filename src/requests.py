@@ -5,7 +5,7 @@ import urllib.parse
 import gzip
 import zlib
 import sys
-from src import CF_API_TOKEN, CF_IDENTIFIER
+from src import CF_API_TOKEN, CF_IDENTIFIER, error
 
 class RequestException(Exception):
     pass
@@ -35,7 +35,8 @@ class Session:
         
         return response_body
 
-    def _request(self, method, url, data=None):
+    def _request(self, method, endpoint, data=None):
+        url = self.base_url + endpoint
         parsed_url = urllib.parse.urlparse(url)
         connection = http.client.HTTPSConnection(parsed_url.netloc)
         
@@ -50,23 +51,22 @@ class Session:
         
         if response.status >= 400:
             if response.status == 400:
-                print(f"Request failed with 400 Bad Request: {response_body}")
-                sys.exit(1)
+                error(f"Request failed with 400 Bad Request: {response_body}")
             raise HTTPError(f"Request failed: {response.status} {response.reason}, Body: {response_body}")
         
         return response_body
 
-    def get(self, url):
-        return self._request("GET", url)
+    def get(self, endpoint):
+        return self._request("GET", endpoint)
 
-    def post(self, url, json=None):
-        return self._request("POST", url, json)
+    def post(self, endpoint, json=None):
+        return self._request("POST", endpoint, json)
 
-    def patch(self, url, json=None):
-        return self._request("PATCH", url, json)
+    def patch(self, endpoint, json=None):
+        return self._request("PATCH", endpoint, json)
 
-    def delete(self, url):
-        return self._request("DELETE", url)
+    def delete(self, endpoint):
+        return self._request("DELETE", endpoint)
 
 # Create a session instance
 session = Session()
