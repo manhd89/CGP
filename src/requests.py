@@ -16,6 +16,9 @@ class RequestException(Exception):
 class HTTPError(RequestException):
     pass
 
+class HTTPException(Exception):
+    pass
+
 class Session:
     def __init__(self):
         self.headers = {
