@@ -106,10 +106,10 @@ retry_config = {
         attempt_number, multiplier=1, max_wait=10
     ),
     'retry': retry_if_exception_type((RequestException, )),
-    'after': lambda retry_state: info(
+    'after': lambda retry_state: silent_error(
         f"Retrying ({retry_state['attempt_number']}): {retry_state['outcome']}"
     ),
-    'before_sleep': lambda retry_state: info(
+    'before_sleep': lambda retry_state: silent_error(
         f"Sleeping before next retry ({retry_state['attempt_number']})"
     )
 }
