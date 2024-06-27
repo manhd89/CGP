@@ -16,9 +16,6 @@ class RequestException(Exception):
 class HTTPError(RequestException):
     pass
 
-class HTTPException(Exception):
-    pass
-
 class Session:
     def __init__(self):
         self.headers = {
@@ -81,7 +78,7 @@ def wait_random_exponential(attempt_number, multiplier=1, max_wait=10):
     return min(multiplier * (2 ** random.uniform(0, attempt_number - 1)), max_wait)
 
 def retry_if_exception_type(exceptions):
-    return lambda e: isinstance(e, exceptions) and not (isinstance(e, HTTPError) and e.response.status == 400)
+    return lambda e: isinstance(e, exceptions)
 
 def retry(stop=None, wait=None, retry=None, after=None, before_sleep=None):
     def decorator(func):
@@ -111,7 +108,7 @@ retry_config = {
     'wait': lambda attempt_number: wait_random_exponential(
         attempt_number, multiplier=1, max_wait=10
     ),
-    'retry': retry_if_exception_type((HTTPException,)),
+    'retry': retry_if_exception_type((HTTPError, RequestException)),
     'after': lambda retry_state: info(
         f"Retrying ({retry_state['attempt_number']}): {retry_state['outcome']}"
     ),
