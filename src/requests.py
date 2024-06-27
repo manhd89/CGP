@@ -138,6 +138,5 @@ def rate_limited_request(func):
         rate_limiter.wait_for_next_request()
         return func(*args, **kwargs)
     return wrapper
-
-# Create a session instance
+    
 session = Session()
