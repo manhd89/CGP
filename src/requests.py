@@ -81,7 +81,7 @@ def wait_random_exponential(attempt_number, multiplier=1, max_wait=10):
     return min(multiplier * (2 ** random.uniform(0, attempt_number - 1)), max_wait)
 
 def retry_if_exception_type(exceptions):
-    return lambda e: isinstance(e, exceptions)
+    return lambda e: isinstance(e, exceptions) and not (isinstance(e, HTTPError) and e.response.status == 400)
 
 def retry(stop=None, wait=None, retry=None, after=None, before_sleep=None):
     def decorator(func):
