@@ -1,20 +1,6 @@
-from src.requests import session, HTTPError, RequestException
-from src import info, MAX_LIST_SIZE, rate_limited_request, retry, stop_never, wait_random_exponential, retry_if_exception_type
 import json
-
-retry_config = {
-    'stop': stop_never,
-    'wait': lambda attempt_number: wait_random_exponential(
-        attempt_number, multiplier=1, max_wait=10
-    ),
-    'retry': retry_if_exception_type((HTTPError, RequestException)),
-    'after': lambda retry_state: info(
-        f"Retrying ({retry_state['attempt_number']}): {retry_state['outcome']}"
-    ),
-    'before_sleep': lambda retry_state: info(
-        f"Sleeping before next retry ({retry_state['attempt_number']})"
-    )
-}
+from src import MAX_LIST_SIZE
+from src.requests import session, retry, retry_config
 
 @retry(**retry_config)
 def get_current_lists():
