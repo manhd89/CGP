@@ -13,9 +13,6 @@ from src import info, silent_error, error, RATE_LIMIT_INTERVAL, CF_IDENTIFIER, C
 class RequestException(Exception):
     pass
 
-class HTTPError(RequestException):
-    pass
-
 class Session:
     def __init__(self):
         self.headers = {
@@ -55,7 +52,7 @@ class Session:
         if response.status >= 400:
             if response.status == 400:
                 error(f"Request failed with 400 Bad Request: {response_body}")
-            raise HTTPError(f"Request failed: {response.status} {response.reason}, Body: {response_body}")
+            raise RequestException(f"Request failed: {response.status} {response.reason}, Body: {response_body}")
         
         return response_body
 
@@ -108,7 +105,7 @@ retry_config = {
     'wait': lambda attempt_number: wait_random_exponential(
         attempt_number, multiplier=1, max_wait=10
     ),
-    'retry': retry_if_exception_type((HTTPError, RequestException)),
+    'retry': retry_if_exception_type((RequestException, )),
     'after': lambda retry_state: info(
         f"Retrying ({retry_state['attempt_number']}): {retry_state['outcome']}"
     ),
