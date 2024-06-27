@@ -54,7 +54,7 @@ class Session:
         
         if response.status >= 400:
             if response.status == 400:
-                error(f"Request failed with 400 Bad Request: {response_body}")
+                error(f"Request failed: {response.status} {response.reason}, Body: {response_body}")
             raise RequestException(f"Request failed: {response.status} {response.reason}, Body: {response_body}")
         
         return response_body
