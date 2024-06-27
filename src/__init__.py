@@ -9,7 +9,7 @@ from functools import wraps
 # Constants
 MAX_LISTS = 300
 MAX_LIST_SIZE = 1000
-RATE_LIMIT_INTERVAL = 0.3
+RATE_LIMIT_INTERVAL = 1.0
 PREFIX = "AdBlock-DNS-Filters"
 
 # Read .env variables 
