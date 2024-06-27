@@ -1,104 +1,81 @@
-import ssl
-import gzip
+import os
+import http.client
 import json
+import urllib.parse
+import gzip
+import zlib
+import sys
 import time
 import random
-import http.client
-import socket
-import zlib
-from io import BytesIO
 from functools import wraps
-from typing import Optional, Tuple
-from urllib.parse import urlencode
-from src import info, silent_error, error, RATE_LIMIT_INTERVAL, CF_IDENTIFIER, CF_API_TOKEN
+from src import (
+    info, silent_error, error, 
+    RATE_LIMIT_INTERVAL, CF_IDENTIFIER, CF_API_TOKEN
+)
+
+class RequestException(Exception):
+    pass
+
+class HTTPError(RequestException):
+    pass
 
 class HTTPException(Exception):
     pass
 
-def get_error_message(status: int, url: str) -> str:
-    error_messages = {
-        400: "400 Client Error: Bad Request",
-        401: "401 Client Error: Unauthorized",
-        403: "403 Client Error: Forbidden",
-        404: "404 Client Error: Not Found",
-        405: "405 Client Error: Method Not Allowed",
-        406: "406 Client Error: Not Acceptable",
-        408: "408 Client Error: Request Timeout",
-        409: "409 Client Error: Conflict",
-        410: "410 Client Error: Gone",
-        411: "411 Client Error: Length Required",
-        412: "412 Client Error: Precondition Failed",
-        413: "413 Client Error: Payload Too Large",
-        414: "414 Client Error: URI Too Long",
-        415: "415 Client Error: Unsupported Media Type",
-        416: "416 Client Error: Range Not Satisfiable",
-        417: "417 Client Error: Expectation Failed",
-        429: "429 Client Error: Too Many Requests",
-        500: "500 Server Error: Internal Server Error",
-        501: "501 Server Error: Not Implemented",
-        502: "502 Server Error: Bad Gateway",
-        503: "503 Server Error: Service Unavailable",
-        504: "504 Server Error: Gateway Timeout",
-        505: "505 Server Error: HTTP Version Not Supported"
-    }
-    if status in error_messages:
-        return f"{error_messages[status]} for url: {url}"
-    elif status >= 400 and status < 500:
-        return f"{status} Client Error for url: {url}"
-    elif status >= 500:
-        return f"{status} Server Error for url: {url}"
-    else:
-        return f"HTTP request failed with status {status} for url: {url}"
+class Session:
+    def __init__(self):
+        self.headers = {
+            "Authorization": f"Bearer {CF_API_TOKEN}",
+            "Content-Type": "application/json",
+            "Accept-Encoding": "gzip, deflate"
+        }
+        self.base_url = f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway"
 
-def cloudflare_gateway_request(method: str, endpoint: str, body: Optional[str] = None, params: Optional[dict] = None, timeout: int = 10) -> Tuple[int, dict]:
-    context = ssl.create_default_context()
-    conn = http.client.HTTPSConnection("api.cloudflare.com", context=context, timeout=timeout)
-
-    headers = {
-        "Authorization": f"Bearer {CF_API_TOKEN}",
-        "Content-Type": "application/json",
-        "Accept-Encoding": "gzip, deflate"
-    }
-
-    url = f"/client/v4/accounts/{CF_IDENTIFIER}/gateway{endpoint}"
-    if params:
-        url += f"?{urlencode(params)}"
-    full_url = f"https://api.cloudflare.com{url}"
-
-    try:
-        conn.request(method, url, body, headers)
-        response = conn.getresponse()
-        data = response.read()
-        status = response.status
-
-        if status == 400:
-            error_message = get_error_message(status, full_url)
-            error(error_message)
-            raise HTTPException(error_message)
-
-        if status != 200:
-            error_message = get_error_message(status, full_url)
-            info(error_message)
-            raise HTTPException(error_message)
-
-        content_encoding = response.getheader('Content-Encoding')
+    def _decode_response(self, response):
+        content_encoding = response.getheader('Content-Encoding', '')
+        response_body = response.read()
+        
         if content_encoding == 'gzip':
-            buf = BytesIO(data)
-            with gzip.GzipFile(fileobj=buf) as f:
-                data = f.read()
+            response_body = gzip.decompress(response_body).decode('utf-8')
         elif content_encoding == 'deflate':
-            data = zlib.decompress(data)
+            response_body = zlib.decompress(response_body).decode('utf-8')
+        else:
+            response_body = response_body.decode('utf-8')
+        
+        return response_body
 
-        return status, json.loads(data.decode('utf-8'))
+    def _request(self, method, endpoint, data=None):
+        url = self.base_url + endpoint
+        parsed_url = urllib.parse.urlparse(url)
+        connection = http.client.HTTPSConnection(parsed_url.netloc)
+        
+        body = None
+        if data:
+            body = json.dumps(data)
+        
+        connection.request(method, parsed_url.path + ('?' + parsed_url.query if parsed_url.query else ''), body, self.headers)
+        response = connection.getresponse()
+        
+        response_body = self._decode_response(response)
+        
+        if response.status >= 400:
+            if response.status == 400:
+                error(f"Request failed with 400 Bad Request: {response_body}")
+            raise HTTPError(f"Request failed: {response.status} {response.reason}, Body: {response_body}")
+        
+        return response_body
 
-    except (http.client.HTTPException, ssl.SSLError, socket.timeout, OSError) as e:
-        info(f"Network error occurred: {e}")
-        raise HTTPException(f"Network error occurred: {e}")
-    except json.JSONDecodeError:
-        info("Failed to decode JSON response")
-        raise HTTPException("Failed to decode JSON response")
-    finally:
-        conn.close()
+    def get(self, endpoint):
+        return self._request("GET", endpoint)
+
+    def post(self, endpoint, json=None):
+        return self._request("POST", endpoint, json)
+
+    def patch(self, endpoint, json=None):
+        return self._request("PATCH", endpoint, json)
+
+    def delete(self, endpoint):
+        return self._request("DELETE", endpoint)
 
 def stop_never(attempt_number):
     return False
@@ -167,3 +144,5 @@ def rate_limited_request(func):
         rate_limiter.wait_for_next_request()
         return func(*args, **kwargs)
     return wrapper
+
+session = Session()
