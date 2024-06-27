@@ -1,5 +1,5 @@
 from src.requests import session, HTTPError, RequestException
-from src import info, MAX_LIST_SIZE, rate_limited_request, retry, stop_never, wait_random_exponential, retry_if_exception_type
+from src import info,BASE_URL, MAX_LIST_SIZE, rate_limited_request, retry, stop_never, wait_random_exponential, retry_if_exception_type
 import json
 
 retry_config = {
@@ -15,8 +15,6 @@ retry_config = {
         f"Sleeping before next retry ({retry_state['attempt_number']})"
     )
 }
-
-BASE_URL=f"https://api.cloudflare.com/client/v4/accounts/{CF_IDENTIFIER}/gateway"
 
 @retry(**retry_config)
 def get_current_lists():
