@@ -1,12 +1,12 @@
 import os
-import http.client
+import sys
 import json
-import urllib.parse
 import gzip
 import zlib
-import sys
 import time
 import random
+import http.client
+import urllib.parse
 from functools import wraps
 from src import info, silent_error, error, RATE_LIMIT_INTERVAL, CF_IDENTIFIER, CF_API_TOKEN
 
