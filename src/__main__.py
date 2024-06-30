@@ -104,7 +104,7 @@ class CloudflareManager:
 
                 created_list = cloudflare.create_list(payload)
                 if created_list:
-                    used_list_ids.append(created_list.get("result", {}).get("id"))
+                    used_list_ids.append(created_list)
 
         policy_id = None
         for policy_item in current_policies:
