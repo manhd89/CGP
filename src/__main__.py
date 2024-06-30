@@ -27,7 +27,7 @@ class CloudflareManager:
             error(f"The domains list has more than {self.max_list_size * self.max_lists} lines")
             return
 
-        total_lists = -(-total_lines // self.max_list_size)  # Ceiling division
+        total_lists = -(-total_lines // self.max_list_size)
         current_lists = cloudflare.get_current_lists()["result"] or []
         current_policies = cloudflare.get_current_policies()["result"] or []
 
@@ -67,7 +67,7 @@ class CloudflareManager:
 
         for list_item in current_lists_with_prefix:
             if f"{self.adlist_name}" in list_item["name"]:
-                list_index = int(re.search(r'\d+', list_item["name"]).group())
+                list_index = sorted(int(re.search(r'\d+', list_item["name"]).group()))
                 if list_index in existing_indices and list_index - 1 < len(chunked_lists):
                     list_items = cloudflare.get_list_items(list_item["id"])
                     list_items_values = [
