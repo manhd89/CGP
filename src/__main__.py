@@ -1,9 +1,5 @@
 import re
-from src import (
-    info, error, silent_error,
-    utils, domains, cloudflare, 
-    PREFIX, MAX_LISTS, MAX_LIST_SIZE,
-)
+from src import info, error, silent_error, utils, domains, cloudflare, PREFIX, MAX_LISTS, MAX_LIST_SIZE
 
 class CloudflareManager:
     def __init__(self, prefix, max_lists, max_list_size):
@@ -64,68 +60,32 @@ class CloudflareManager:
         total_lists = len(chunked_lists)
         missing_indices = utils.get_missing_indices(existing_indices, total_lists)
 
-        for list_item in current_lists_with_prefix:
-            if f"{self.adlist_name}" in list_item["name"]:
-                list_index = int(re.search(r'\d+', list_item["name"]).group())
-                if list_index in existing_indices and list_index - 1 < len(chunked_lists):
-                    list_items = cloudflare.get_list_items(list_item["id"])
-                    list_items_values = [
-                        item["value"] for item in list_items.get("result", []) if item["value"] is not None
-                    ]
-                    new_list_items = chunked_lists[list_index - 1]
+        for index in range(1, total_lists + 1):
+            formatted_counter = f"{index:03d}"
+            info(f"Creating list {self.adlist_name} - {formatted_counter}")
 
-                    if utils.hash_list(new_list_items) == utils.hash_list(list_items_values):
-                        info(f"No changes detected for list {list_item['name']}, skipping update")
-                        used_list_ids.append(list_item["id"])
-                    else:
-                        info(f"Updating list {list_item['name']}")
-                        list_items_array = [{"value": domain} for domain in new_list_items]
-
-                        payload = {
-                            "append": list_items_array,
-                            "remove": list_items_values,
-                        }
-
-                        cloudflare.patch_list(list_item["id"], payload)
-                        used_list_ids.append(list_item["id"])
-                else:
-                    info(f"Marking list {list_item['name']} for deletion")
-                    excess_list_ids.append(list_item["id"])
-
-        for index in missing_indices:
-            if index - 1 < len(chunked_lists):
-                formatted_counter = f"{index:03d}"
-                info(f"Creating list {self.adlist_name} - {formatted_counter}")
-
+            if index in missing_indices and index - 1 < len(chunked_lists):
                 payload = utils.create_list_payload(
                     f"{self.adlist_name} - {formatted_counter}", chunked_lists[index - 1]
                 )
-
-                created_list = cloudflare.create_list(payload)
-                if created_list:
-                    used_list_ids.append(created_list.get("result", {}).get("id"))
-
-        if not used_list_ids:
-            for index in range(1, total_lists + 1):
-                formatted_counter = f"{index:03d}"
-                info(f"Creating list {self.adlist_name} - {formatted_counter}")
-
+            else:
                 payload = utils.create_list_payload(
-                    f"{self.adlist_name} - {formatted_counter}", chunked_lists[index - 1]
+                    f"{self.adlist_name} - {formatted_counter}", []
                 )
 
-                created_list = cloudflare.create_list(payload)
-                if created_list:
-                    used_list_ids.append(created_list.get("result", {}).get("id"))
+            created_list = cloudflare.create_list(payload)
+            if created_list:
+                used_list_ids.append(created_list.get("result", {}).get("id"))
+
+        json_data = utils.create_policy_json(
+            self.policy_name, used_list_ids
+        )
 
         policy_id = None
         for policy_item in current_policies:
             if policy_item["name"] == self.policy_name:
                 policy_id = policy_item["id"]
-
-        json_data = utils.create_policy_json(
-            self.policy_name, used_list_ids
-        )
+                break
 
         if not policy_id or policy_id == "null":
             info(f"Creating policy {self.policy_name}")
@@ -134,11 +94,14 @@ class CloudflareManager:
             info(f"Updating policy {self.policy_name}")
             cloudflare.update_policy(policy_id, json_data)
 
+        for list_item in current_lists:
+            if f"{self.adlist_name}" in list_item["name"] and list_item["id"] not in used_list_ids:
+                excess_list_ids.append(list_item["id"])
+
         if excess_list_ids:
-            for list_item in current_lists:
-                if list_item["id"] in excess_list_ids:
-                    info(f"Deleting list {list_item['name']}")
-                    cloudflare.delete_list(list_item["id"])
+            for list_id in excess_list_ids:
+                info(f"Deleting list {list_id}")
+                cloudflare.delete_list(list_id)
 
     def leave(self):
         current_lists = cloudflare.get_current_lists()["result"] or []
@@ -149,25 +112,19 @@ class CloudflareManager:
         for policy_item in current_policies:
             if policy_item["name"] == self.policy_name:
                 policy_id = policy_item["id"]
+                break
 
         if policy_id:
             info(f"Deleting policy {self.policy_name}")
             cloudflare.delete_policy(policy_id)
-            
-        if current_lists:
-            current_lists.sort(key=lambda x: int(x["name"].split("-")[-1].strip()))
 
         for list_item in current_lists:
             if f"{self.adlist_name}" in list_item["name"]:
                 list_ids_to_delete.append(list_item['id'])
 
         for list_id in list_ids_to_delete:
-            list_to_delete = next(
-                (list_item for list_item in current_lists if list_item["id"] == list_id), None
-            )
-            if list_to_delete:
-                info(f"Deleting list {list_to_delete['name']}")
-                cloudflare.delete_list(list_id)
+            info(f"Deleting list {list_id}")
+            cloudflare.delete_list(list_id)
 
 if __name__ == "__main__":
     cloudflare_manager = CloudflareManager(PREFIX, MAX_LISTS, MAX_LIST_SIZE)
