@@ -156,7 +156,17 @@ class CloudflareManager:
                 info(f"Deleting list {list_to_delete['name']}")
                 cloudflare.delete_list(list_id)
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser(description="Cloudflare Manager Script")
+    parser.add_argument("action", choices=["run", "leave"], help="Choose action: run or leave")
+    args = parser.parse_args()    
     cloudflare_manager = CloudflareManager(PREFIX, MAX_LISTS, MAX_LIST_SIZE)
-    cloudflare_manager.run()
-    # cloudflare_manager.leave() # Uncomment if you want to leave script
+    if args.action == "run":
+        cloudflare_manager.run()
+    elif args.action == "leave":
+        cloudflare_manager.leave()
+    else:
+        logger.error("Invalid action. Please choose either 'run' or 'leave'.")
+
+if __name__ == "__main__":
+    main()
