@@ -27,8 +27,9 @@ class CloudflareManager:
             error(f"The domains list has more than {self.max_list_size * self.max_lists} lines")
             return
 
-        total_lists = -(-total_lines // self.max_list_size)
+        total_lists = total_lines // self.max_list_size
         current_lists = cloudflare.get_current_lists()["result"] or []
+        current_lists.sort(key=utils.safe_sort_key)
         current_policies = cloudflare.get_current_policies()["result"] or []
 
         info(f"Total lists on Cloudflare: {len(current_lists)}")
