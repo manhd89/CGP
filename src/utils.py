@@ -1,11 +1,7 @@
 import re
 import time
 import hashlib
-from src import (
-    cloudflare,
-    info, silent_error,
-    MAX_LIST_SIZE
-)
+from src import MAX_LIST_SIZE
 
 def split_domain_list(domain_list):
     return [
