@@ -29,8 +29,8 @@ class CloudflareManager:
 
         total_lists = total_lines // self.max_list_size
         current_lists = cloudflare.get_current_lists()["result"] or []
-        current_lists.sort(key=utils.safe_sort_key)
         current_policies = cloudflare.get_current_policies()["result"] or []
+        current_lists.sort(key=utils.safe_sort_key)
 
         info(f"Total lists on Cloudflare: {len(current_lists)}")
         total_domains = sum([l['count'] for l in current_lists]) if current_lists else 0
@@ -131,8 +131,8 @@ class CloudflareManager:
 
     def leave(self):
         current_lists = cloudflare.get_current_lists()["result"] or []
-        current_lists.sort(key=utils.safe_sort_key)
         current_policies = cloudflare.get_current_policies()["result"] or []
+        current_lists.sort(key=utils.safe_sort_key)
         policy_id = None
         list_ids_to_delete = []
 
