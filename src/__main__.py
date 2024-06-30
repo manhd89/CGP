@@ -165,7 +165,7 @@ def main():
     elif args.action == "leave":
         cloudflare_manager.leave()
     else:
-        error("Invalid action. Please choose either 'run' or 'leave'.")
+        error("Invalid action. Please choose either 'python -m src run' or 'python -m src leave'.")
 
 if __name__ == "__main__":
     main()
