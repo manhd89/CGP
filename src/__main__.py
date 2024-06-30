@@ -105,19 +105,6 @@ class CloudflareManager:
                 if created_list:
                     used_list_ids.append(created_list.get("result", {}).get("id"))
 
-        if not used_list_ids:
-            for index in range(1, total_lists + 1):
-                formatted_counter = f"{index:03d}"
-                info(f"Creating list {self.adlist_name} - {formatted_counter}")
-
-                payload = utils.create_list_payload(
-                    f"{self.adlist_name} - {formatted_counter}", chunked_lists[index - 1]
-                )
-
-                created_list = cloudflare.create_list(payload)
-                if created_list:
-                    used_list_ids.append(created_list.get("result", {}).get("id"))
-
         policy_id = None
         for policy_item in current_policies:
             if policy_item["name"] == self.policy_name:
