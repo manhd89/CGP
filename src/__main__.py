@@ -158,5 +158,5 @@ class CloudflareManager:
 
 if __name__ == "__main__":
     cloudflare_manager = CloudflareManager(PREFIX, MAX_LISTS, MAX_LIST_SIZE)
-    cloudflare_manager.run()
-    # cloudflare_manager.leave() # Uncomment if you want to leave script
+    # cloudflare_manager.run()
+    cloudflare_manager.leave() # Uncomment if you want to leave script
