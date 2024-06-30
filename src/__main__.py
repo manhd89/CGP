@@ -131,6 +131,7 @@ class CloudflareManager:
 
     def leave(self):
         current_lists = cloudflare.get_current_lists()["result"] or []
+        current_lists.sort(key=utils.safe_sort_key)
         current_policies = cloudflare.get_current_policies()["result"] or []
         policy_id = None
         list_ids_to_delete = []
@@ -142,9 +143,6 @@ class CloudflareManager:
         if policy_id:
             info(f"Deleting policy {self.policy_name}")
             cloudflare.delete_policy(policy_id)
-            
-        if current_lists:
-            current_lists.sort(key=lambda x: int(x["name"].split("-")[-1].strip()))
 
         for list_item in current_lists:
             if f"{self.adlist_name}" in list_item["name"]:
