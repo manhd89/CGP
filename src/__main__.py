@@ -69,11 +69,9 @@ class CloudflareManager:
         for list_item in current_lists_with_prefix:
             list_index = int(re.search(r'\d+', list_item["name"]).group())
             if list_index in existing_indices and list_index - 1 < len(chunked_lists):
-                list_items = cloudflare.get_list_items(list_item["id"])
-                info(f"{list_items}")
-                return 
+                list_items = cloudflare.get_list_items(list_item["id"])["result"] or []
                 list_items_values = [
-                    item for item in list_items
+                    item for item in list_items["value"]
                 ]
                 new_list_items = chunked_lists[list_index - 1]
 
