@@ -102,9 +102,9 @@ class CloudflareManager:
                     f"{self.adlist_name} - {formatted_counter}", chunked_lists[index - 1]
                 )
 
-                created_list = cloudflare.create_list(payload)
+                created_list = cloudflare.create_list(payload)["result"] or []
                 if created_list:
-                    used_list_ids.append(created_list.get("result", {}).get("id"))
+                    used_list_ids.append(created_list["id"])
 
         policy_id = None
         for policy_item in current_policies:
