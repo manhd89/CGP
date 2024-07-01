@@ -70,7 +70,8 @@ class CloudflareManager:
             list_index = int(re.search(r'\d+', list_item["name"]).group())
             if list_index in existing_indices and list_index - 1 < len(chunked_lists):
                 list_items = cloudflare.get_list_items(list_item["id"])["result"] or []
-                info(f"{list_items['value']}")
+                list = list_items['value']
+                info(f"{list})
                 return
                 list_items_values = [
                     item for item in list_items["value"]
