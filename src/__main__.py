@@ -70,7 +70,9 @@ class CloudflareManager:
             list_index = int(re.search(r'\d+', list_item["name"]).group())
             if list_index in existing_indices and list_index - 1 < len(chunked_lists):
                 list_items = cloudflare.get_list_items(list_item["id"])["result"] or []
-                list_items_values = [item["value"] for item in list_items]
+                list_items_values = [
+                    item["value"] for item in list_items
+                ]
                 new_list_items = chunked_lists[list_index - 1]
 
                 if utils.hash_list(new_list_items) == utils.hash_list(list_items_values):
@@ -146,7 +148,9 @@ class CloudflareManager:
                 list_ids_to_delete.append(list_item['id'])
 
         for list_id in list_ids_to_delete:
-            list_to_delete = next(list_item for list_item in current_lists)
+            list_to_delete = next(
+                list_item for list_item in current_lists if list_item["id"] == list_id
+            )
             if list_to_delete:
                 info(f"Deleting list {list_to_delete['name']}")
                 cloudflare.delete_list(list_id)
